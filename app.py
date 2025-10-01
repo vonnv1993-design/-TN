@@ -525,7 +525,7 @@ def main():
     try:
         init_database()
     except Exception as e:
-        st.error(f"Lỗi khởi tạo database: {e}")
+        st.error(f"Chào mừng: {e}")
     
     # Initialize session state
     if 'admin_logged_in' not in st.session_state:
@@ -655,7 +655,7 @@ def main():
         # Chi Đoàn - Thay đổi thành text input tự do
         chi_doan = st.text_input(
             "🏢 Chi Đoàn *",
-            placeholder="Ví dụ: Chi Đoàn Khoa Công nghệ Thông tin",
+            placeholder="Ví dụ: Chi Đoàn Ban CĐSCN",
             help="Nhập tên Chi Đoàn mà bạn đang sinh hoạt"
         )
         
