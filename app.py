@@ -14,65 +14,398 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS cho mobile-friendly
+# CSS hiện đại với màu vàng đồng và xanh
 st.markdown("""
 <style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Root variables */
+    :root {
+        --primary-blue: #1E40AF;
+        --secondary-blue: #3B82F6;
+        --light-blue: #DBEAFE;
+        --golden: #F59E0B;
+        --light-golden: #FEF3C7;
+        --dark-golden: #D97706;
+        --gradient-primary: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        --gradient-golden: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        --gradient-bg: linear-gradient(135deg, #DBEAFE 0%, #FEF3C7 100%);
+        --text-dark: #1F2937;
+        --text-light: #6B7280;
+        --white: #FFFFFF;
+        --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.15);
+        --border-radius: 16px;
+        --border-radius-small: 12px;
+    }
+
+    /* Base styles */
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Remove default streamlit styling */
     .main > div {
-        padding-top: 2rem;
+        padding-top: 1rem;
+        max-width: 100%;
     }
-    .stTextInput > div > div > input {
+    
+    .main .block-container {
+        padding: 1rem;
+        max-width: 100%;
+    }
+    
+    /* Main container */
+    .stApp {
+        background: var(--gradient-bg);
+        min-height: 100vh;
+    }
+    
+    /* Header styling */
+    .header-container {
+        background: var(--gradient-primary);
+        padding: 2rem 1.5rem;
+        margin: -1rem -1rem 2rem -1rem;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        text-align: center;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .header-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,0 1000,100 1000,0"/></svg>');
+        background-size: cover;
+    }
+    
+    .header-title {
+        color: var(--white);
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .header-subtitle {
+        color: rgba(255, 255, 255, 0.9);
         font-size: 16px;
+        font-weight: 400;
+        margin-top: 0.5rem;
+        position: relative;
+        z-index: 1;
     }
-    .stTextArea > div > div > textarea {
-        font-size: 16px;
-        min-height: 150px;
+
+    /* Modern card styling */
+    .modern-card {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
+    
+    .modern-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-golden);
+    }
+    
+    .modern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    /* Admin card special styling */
+    .admin-card {
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        color: var(--white);
+        border: none;
+    }
+    
+    .admin-card::before {
+        background: var(--gradient-golden);
+    }
+
+    /* Form styling */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
     .stSelectbox > div > div > select {
-        font-size: 16px;
+        font-size: 16px !important;
+        border: 2px solid #E5E7EB !important;
+        border-radius: var(--border-radius-small) !important;
+        padding: 0.75rem !important;
+        background: var(--white) !important;
+        transition: all 0.3s ease !important;
+        font-family: 'Inter', sans-serif !important;
     }
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: var(--secondary-blue) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
+    }
+    
+    .stTextArea > div > div > textarea {
+        min-height: 120px !important;
+        resize: vertical !important;
+    }
+
+    /* Label styling */
+    .stTextInput > label,
+    .stTextArea > label,
+    .stSelectbox > label {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: var(--text-dark) !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Button styling */
     .stButton > button {
-        width: 100%;
-        height: 50px;
-        font-size: 18px;
-        font-weight: bold;
+        background: var(--gradient-golden) !important;
+        color: var(--white) !important;
+        border: none !important;
+        border-radius: var(--border-radius-small) !important;
+        padding: 0.75rem 2rem !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        font-family: 'Inter', sans-serif !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 52px !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+        text-transform: none !important;
     }
+    
+    .stButton > button:hover {
+        background: var(--dark-golden) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4) !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0px) !important;
+    }
+
+    /* Secondary button styling */
+    .secondary-btn > button {
+        background: var(--gradient-primary) !important;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3) !important;
+    }
+    
+    .secondary-btn > button:hover {
+        background: var(--primary-blue) !important;
+        box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4) !important;
+    }
+
+    /* Download button styling */
+    .stDownloadButton > button {
+        background: var(--gradient-primary) !important;
+        color: var(--white) !important;
+        border: none !important;
+        border-radius: var(--border-radius-small) !important;
+        padding: 0.75rem 2rem !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3) !important;
+    }
+    
+    .stDownloadButton > button:hover {
+        background: var(--primary-blue) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4) !important;
+    }
+
+    /* Alert boxes */
+    .success-box {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        color: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        margin: 1rem 0;
+        font-weight: 600;
+        font-size: 16px;
+        box-shadow: var(--shadow);
+        border: none;
+    }
+    
+    .info-box {
+        background: var(--light-blue);
+        color: var(--primary-blue);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 1rem 0;
+        border: 2px solid rgba(59, 130, 246, 0.2);
+        position: relative;
+    }
+    
+    .warning-box {
+        background: var(--light-golden);
+        color: var(--dark-golden);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 1rem 0;
+        border: 2px solid rgba(245, 158, 11, 0.2);
+        font-weight: 500;
+    }
+
+    /* Stats card */
+    .stats-card {
+        background: var(--gradient-golden);
+        color: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        margin: 1rem 0;
+        box-shadow: var(--shadow);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+
+    /* Expander styling */
+    .streamlit-expander {
+        border: 2px solid var(--secondary-blue) !important;
+        border-radius: var(--border-radius) !important;
+        overflow: hidden !important;
+        box-shadow: var(--shadow) !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .streamlit-expander > summary {
+        background: var(--gradient-primary) !important;
+        color: var(--white) !important;
+        padding: 1rem 1.5rem !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+    }
+    
+    .streamlit-expander > div[data-testid="stExpanderDetails"] {
+        background: var(--white) !important;
+        padding: 1.5rem !important;
+    }
+
+    /* Dataframe styling */
+    .stDataFrame {
+        border-radius: var(--border-radius) !important;
+        overflow: hidden !important;
+        box-shadow: var(--shadow) !important;
+    }
+
+    /* Word counter */
+    .word-counter {
+        background: var(--light-golden);
+        color: var(--dark-golden);
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius-small);
+        font-weight: 600;
+        text-align: center;
+        margin: 0.5rem 0;
+        font-size: 14px;
+        border: 2px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .word-counter.warning {
+        background: #FEE2E2;
+        color: #DC2626;
+        border-color: rgba(220, 38, 38, 0.2);
+    }
+
+    /* Footer styling */
+    .footer {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        margin-top: 2rem;
+        box-shadow: var(--shadow);
+        border-top: 4px solid var(--golden);
+    }
+
+    /* Mobile responsive */
     @media (max-width: 768px) {
+        .header-container {
+            margin: -1rem -1rem 1.5rem -1rem;
+            padding: 1.5rem 1rem;
+        }
+        
+        .header-title {
+            font-size: 24px;
+        }
+        
+        .modern-card {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
         .main .block-container {
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding: 0.5rem;
         }
     }
-    .header-title {
-        text-align: center;
-        color: #1f77b4;
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 2rem;
-    }
-    .success-message {
-        padding: 1rem;
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        border-radius: 5px;
-        color: #155724;
-        text-align: center;
+
+    /* Form container */
+    .form-container {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border-top: 4px solid var(--golden);
         margin: 1rem 0;
     }
-    .error-message {
-        padding: 1rem;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        border-radius: 5px;
-        color: #721c24;
-        text-align: center;
-        margin: 1rem 0;
+
+    /* Section headers */
+    .section-header {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-blue);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--light-blue);
     }
+
+    /* Hide streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # Khởi tạo database
+@st.cache_resource
 def init_database():
-    conn = sqlite3.connect('feedback.db')
+    conn = sqlite3.connect('feedback.db', check_same_thread=False)
     cursor = conn.cursor()
     
     # Tạo bảng góp ý
@@ -103,11 +436,11 @@ def init_database():
     ''', ("Admin", admin_password))
     
     conn.commit()
-    conn.close()
+    return conn
 
 # Lưu góp ý vào database
 def save_feedback(ho_ten, chi_doan, y_kien):
-    conn = sqlite3.connect('feedback.db')
+    conn = sqlite3.connect('feedback.db', check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO feedback (ho_ten, chi_doan, y_kien)
@@ -118,21 +451,24 @@ def save_feedback(ho_ten, chi_doan, y_kien):
 
 # Lấy danh sách góp ý
 def get_all_feedback():
-    conn = sqlite3.connect('feedback.db')
-    df = pd.read_sql_query('''
-        SELECT id, ho_ten as "Họ và Tên", 
-               chi_doan as "Chi Đoàn", 
-               y_kien as "Ý kiến góp ý", 
-               thoi_gian as "Thời gian"
-        FROM feedback 
-        ORDER BY thoi_gian DESC
-    ''', conn)
+    conn = sqlite3.connect('feedback.db', check_same_thread=False)
+    try:
+        df = pd.read_sql_query('''
+            SELECT id, ho_ten as "Họ và Tên", 
+                   chi_doan as "Chi Đoàn", 
+                   y_kien as "Ý kiến góp ý", 
+                   datetime(thoi_gian, 'localtime') as "Thời gian"
+            FROM feedback 
+            ORDER BY thoi_gian DESC
+        ''', conn)
+    except:
+        df = pd.DataFrame(columns=["Họ và Tên", "Chi Đoàn", "Ý kiến góp ý", "Thời gian"])
     conn.close()
     return df
 
 # Xác thực admin
 def verify_admin(username, password):
-    conn = sqlite3.connect('feedback.db')
+    conn = sqlite3.connect('feedback.db', check_same_thread=False)
     cursor = conn.cursor()
     password_hash = hashlib.sha256(password.encode()).hexdigest()
     cursor.execute('''
@@ -152,216 +488,292 @@ def count_words(text):
 
 # Danh sách Chi Đoàn
 CHI_DOAN_LIST = [
-    "Chi Đoàn A1", "Chi Đoàn A2", "Chi Đoàn A3", "Chi Đoàn A4",
-    "Chi Đoàn B1", "Chi Đoàn B2", "Chi Đoàn B3", "Chi Đoàn B4",
-    "Chi Đoàn C1", "Chi Đoàn C2", "Chi Đoàn C3", "Chi Đoàn C4",
-    "Chi Đoàn D1", "Chi Đoàn D2", "Chi Đoàn D3", "Chi Đoàn D4",
+    "Chi Đoàn Khoa Công nghệ Thông tin",
+    "Chi Đoàn Khoa Kinh tế",
+    "Chi Đoàn Khoa Ngoại ngữ", 
+    "Chi Đoàn Khoa Luật",
+    "Chi Đoàn Khoa Y",
+    "Chi Đoàn Khoa Kỹ thuật",
+    "Chi Đoàn Khoa Giáo dục",
+    "Chi Đoàn Khoa Khoa học Xã hội",
+    "Chi Đoàn A1", "Chi Đoàn A2", "Chi Đoàn A3",
+    "Chi Đoàn B1", "Chi Đoàn B2", "Chi Đoàn B3", 
+    "Chi Đoàn C1", "Chi Đoàn C2", "Chi Đoàn C3",
     "Khác"
 ]
 
 def main():
     # Khởi tạo database
-    init_database()
+    try:
+        init_database()
+    except Exception as e:
+        st.error(f"Lỗi khởi tạo database: {e}")
     
     # Initialize session state
     if 'admin_logged_in' not in st.session_state:
         st.session_state.admin_logged_in = False
-    if 'show_admin_login' not in st.session_state:
-        st.session_state.show_admin_login = False
 
-    # Header
-    st.markdown('<div class="header-title">📝 GÓP Ý VĂN KIỆN ĐẠI HỘI ĐOÀN TCTHK</div>', unsafe_allow_html=True)
-    
-    # Admin login toggle
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    # Header với thiết kế hiện đại
+    st.markdown('''
+    <div class="header-container">
+        <div class="header-title">📝 GÓP Ý VĂN KIỆN</div>
+        <div class="header-title">ĐẠI HỘI ĐOÀN TCTHK</div>
+        <div class="header-subtitle">Chia sẻ ý kiến đóng góp của bạn để xây dựng tương lai tốt đẹp hơn</div>
+    </div>
+    ''', unsafe_allow_html=True)
+
+    # Admin Panel với thiết kế card hiện đại
+    with st.expander("🔐 KHU VỰC QUẢN TRỊ", expanded=False):
         if not st.session_state.admin_logged_in:
-            if st.button("🔐 Đăng nhập Admin", key="admin_toggle"):
-                st.session_state.show_admin_login = not st.session_state.show_admin_login
-        else:
-            if st.button("🚪 Đăng xuất Admin", key="admin_logout"):
-                st.session_state.admin_logged_in = False
-                st.session_state.show_admin_login = False
-                st.rerun()
-
-    # Admin login form
-    if st.session_state.show_admin_login and not st.session_state.admin_logged_in:
-        st.markdown("---")
-        st.subheader("🔐 Đăng nhập Admin")
-        
-        with st.form("admin_login"):
-            admin_username = st.text_input("Tên đăng nhập:")
-            admin_password = st.text_input("Mật khẩu:", type="password")
-            submit_admin = st.form_submit_button("Đăng nhập", use_container_width=True)
+            st.markdown('<div class="section-header">🔑 Đăng nhập Admin</div>', unsafe_allow_html=True)
             
-            if submit_admin:
-                if verify_admin(admin_username, admin_password):
-                    st.session_state.admin_logged_in = True
-                    st.session_state.show_admin_login = False
-                    st.success("Đăng nhập thành công!")
-                    st.rerun()
-                else:
-                    st.error("Tên đăng nhập hoặc mật khẩu không đúng!")
-
-    # Admin panel
-    if st.session_state.admin_logged_in:
-        st.markdown("---")
-        st.subheader("📊 Quản lý Góp ý - Admin Panel")
-        
-        # Lấy dữ liệu góp ý
-        df = get_all_feedback()
-        
-        if not df.empty:
-            st.write(f"**Tổng số góp ý:** {len(df)}")
+            col1, col2 = st.columns(2)
+            with col1:
+                admin_username = st.text_input("👤 Tên đăng nhập", key="admin_user", placeholder="Admin")
+            with col2:
+                admin_password = st.text_input("🔒 Mật khẩu", type="password", key="admin_pass", placeholder="Admin@123")
             
-            # Hiển thị bảng góp ý
-            st.dataframe(
-                df, 
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Ý kiến góp ý": st.column_config.TextColumn(width="large"),
-                    "Thời gian": st.column_config.DatetimeColumn(format="DD/MM/YYYY HH:mm")
-                }
-            )
-            
-            # Xuất Excel
-            if st.button("📥 Xuất file Excel", use_container_width=True):
-                output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, index=False, sheet_name='Góp ý')
-                    
-                    # Định dạng Excel
-                    workbook = writer.book
-                    worksheet = writer.sheets['Góp ý']
-                    
-                    # Định dạng header
-                    header_format = workbook.add_format({
-                        'bold': True,
-                        'text_wrap': True,
-                        'valign': 'top',
-                        'fg_color': '#4472C4',
-                        'font_color': 'white'
-                    })
-                    
-                    # Áp dụng định dạng cho header
-                    for col_num, value in enumerate(df.columns.values):
-                        worksheet.write(0, col_num, value, header_format)
-                    
-                    # Tự động điều chỉnh độ rộng cột
-                    for i, col in enumerate(df.columns):
-                        if col == "Ý kiến góp ý":
-                            worksheet.set_column(i, i, 50)
-                        elif col == "Họ và Tên":
-                            worksheet.set_column(i, i, 20)
-                        elif col == "Chi Đoàn":
-                            worksheet.set_column(i, i, 15)
+            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+            with col_btn2:
+                if st.button("🔓 ĐĂNG NHẬP", key="login_btn"):
+                    if admin_username and admin_password:
+                        if verify_admin(admin_username, admin_password):
+                            st.session_state.admin_logged_in = True
+                            st.success("✅ Đăng nhập thành công!")
+                            st.rerun()
                         else:
-                            worksheet.set_column(i, i, 15)
-                
-                output.seek(0)
-                
-                # Tạo tên file với timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"gop_y_dai_hoi_doan_{timestamp}.xlsx"
-                
-                st.download_button(
-                    label="📥 Tải xuống file Excel",
-                    data=output,
-                    file_name=filename,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-        else:
-            st.info("Chưa có góp ý nào được gửi.")
+                            st.error("❌ Thông tin đăng nhập không đúng!")
+                    else:
+                        st.warning("⚠️ Vui lòng điền đầy đủ thông tin!")
         
-        st.markdown("---")
+        else:
+            # Admin Dashboard
+            st.markdown('<div class="success-box">✅ Chào mừng Admin! Bạn đã đăng nhập thành công.</div>', unsafe_allow_html=True)
+            
+            col_logout1, col_logout2, col_logout3 = st.columns([1, 2, 1])
+            with col_logout2:
+                st.markdown('<div class="secondary-btn">', unsafe_allow_html=True)
+                if st.button("🚪 ĐĂNG XUẤT", key="logout_btn"):
+                    st.session_state.admin_logged_in = False
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            try:
+                df = get_all_feedback()
+                
+                if not df.empty:
+                    # Statistics
+                    st.markdown(f'''
+                    <div class="stats-card">
+                        <div class="stats-number">{len(df)}</div>
+                        <div class="stats-label">📈 TỔNG SỐ GÓP Ý</div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
+                    st.markdown('<div class="section-header">📋 DANH SÁCH GÓP Ý</div>', unsafe_allow_html=True)
+                    
+                    # Hiển thị bảng với styling đẹp
+                    st.dataframe(
+                        df.drop('id', axis=1, errors='ignore'), 
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                    
+                    # Export Excel button
+                    st.markdown("---")
+                    col_export1, col_export2, col_export3 = st.columns([1, 2, 1])
+                    with col_export2:
+                        if st.button("📥 TẢI XUỐNG EXCEL", key="export_btn"):
+                            try:
+                                output = io.BytesIO()
+                                df_export = df.drop('id', axis=1, errors='ignore')
+                                df_export.to_excel(output, index=False, sheet_name='Góp ý')
+                                output.seek(0)
+                                
+                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                filename = f"gop_y_dai_hoi_doan_{timestamp}.xlsx"
+                                
+                                st.download_button(
+                                    label="💾 TẢI FILE EXCEL",
+                                    data=output.getvalue(),
+                                    file_name=filename,
+                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                    key="download_excel"
+                                )
+                                
+                            except Exception as e:
+                                st.error(f"❌ Lỗi tạo file Excel: {e}")
+                else:
+                    st.markdown('''
+                    <div class="info-box">
+                        <h4 style="margin-top: 0;">📭 Chưa có góp ý nào</h4>
+                        <p style="margin-bottom: 0;">Hiện tại chưa có góp ý nào được gửi. Hãy chia sẻ form này để nhận được nhiều phản hồi hơn!</p>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
+            except Exception as e:
+                st.error(f"❌ Lỗi truy xuất dữ liệu: {e}")
 
-    # Form góp ý chính
-    st.subheader("✍️ Gửi góp ý của bạn")
-    st.markdown("*Vui lòng điền đầy đủ thông tin để gửi góp ý*")
+    # Spacing
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Hướng dẫn sử dụng
+    st.markdown('''
+    <div class="info-box">
+        <h4 style="margin-top: 0; color: #1E40AF;">💡 HƯỚNG DẪN GÓP Ý</h4>
+        <div style="display: grid; gap: 0.75rem; margin-bottom: 0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #F59E0B; font-weight: bold;">①</span>
+                <span>Điền đầy đủ <strong>Họ tên</strong> và chọn <strong>Chi Đoàn</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #F59E0B; font-weight: bold;">②</span>
+                <span>Chia sẻ ý kiến của bạn (<strong>tối đa 500 từ</strong>)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #F59E0B; font-weight: bold;">③</span>
+                <span>Nhấn <strong>"GỬI GÓP Ý"</strong> để hoàn tất</span>
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Form góp ý chính với thiết kế hiện đại
+    st.markdown('<div class="form-container">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">✍️ GỬI GÓP Ý CỦA BẠN</div>', unsafe_allow_html=True)
     
     with st.form("feedback_form", clear_on_submit=True):
         # Họ và tên
         ho_ten = st.text_input(
-            "Họ và Tên *",
-            placeholder="Nhập họ và tên đầy đủ của bạn",
-            help="Trường bắt buộc"
+            "👤 Họ và Tên *",
+            placeholder="Ví dụ: Nguyễn Văn An",
+            help="Nhập họ và tên đầy đủ của bạn"
         )
+        
+        # Spacing
+        st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
         
         # Chi Đoàn
         chi_doan = st.selectbox(
-            "Chi Đoàn *",
-            options=["-- Chọn Chi Đoàn --"] + CHI_DOAN_LIST,
-            help="Chọn Chi Đoàn của bạn"
+            "🏢 Chi Đoàn *",
+            options=["-- Chọn Chi Đoàn của bạn --"] + CHI_DOAN_LIST,
+            help="Chọn Chi Đoàn mà bạn đang sinh hoạt"
         )
         
-        # Nếu chọn "Khác", cho phép nhập tên Chi Đoàn khác
+        # Chi Đoàn khác
         if chi_doan == "Khác":
+            st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
             chi_doan_khac = st.text_input(
-                "Tên Chi Đoàn khác:",
-                placeholder="Nhập tên Chi Đoàn của bạn"
+                "📝 Tên Chi Đoàn:",
+                placeholder="Nhập tên Chi Đoàn của bạn",
+                help="Nhập tên chính xác của Chi Đoàn"
             )
-            if chi_doan_khac.strip():
+            if chi_doan_khac and chi_doan_khac.strip():
                 chi_doan = chi_doan_khac.strip()
+        
+        # Spacing
+        st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
         
         # Ý kiến góp ý
         y_kien = st.text_area(
-            "Ý kiến góp ý *",
-            placeholder="Nhập ý kiến góp ý của bạn về Văn kiện Đại hội Đoàn TCTHK (tối đa 500 từ)",
-            help="Tối đa 500 từ",
-            height=150
+            "💭 Ý kiến góp ý *",
+            placeholder="Chia sẻ những ý kiến, đề xuất, góp ý của bạn về Văn kiện Đại hội Đoàn TCTHK. Hãy thể hiện quan điểm một cách rõ ràng và chi tiết...",
+            help="Tối đa 500 từ - Hãy chia sẻ những suy nghĩ chân thành của bạn",
+            height=140
         )
         
-        # Đếm số từ
+        # Word counter với thiết kế đẹp
         if y_kien:
             word_count = count_words(y_kien)
             if word_count > 500:
-                st.error(f"Ý kiến của bạn có {word_count} từ, vượt quá giới hạn 500 từ!")
+                st.markdown(f'''
+                <div class="word-counter warning">
+                    ⚠️ Vượt quá giới hạn: {word_count}/500 từ
+                </div>
+                ''', unsafe_allow_html=True)
             else:
-                st.info(f"Số từ: {word_count}/500")
+                st.markdown(f'''
+                <div class="word-counter">
+                    📊 Số từ: {word_count}/500
+                </div>
+                ''', unsafe_allow_html=True)
+        
+        # Spacing
+        st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
         
         # Submit button
-        submit_button = st.form_submit_button("📤 Gửi góp ý", use_container_width=True)
+        submitted = st.form_submit_button("📤 GỬI GÓP Ý")
         
-        if submit_button:
+        if submitted:
             # Validation
             errors = []
             
-            if not ho_ten or not ho_ten.strip():
-                errors.append("Vui lòng nhập Họ và Tên")
+            if not ho_ten or len(ho_ten.strip()) < 2:
+                errors.append("👤 Vui lòng nhập Họ và Tên (ít nhất 2 ký tự)")
             
-            if not chi_doan or chi_doan == "-- Chọn Chi Đoàn --":
-                errors.append("Vui lòng chọn Chi Đoàn")
+            if not chi_doan or chi_doan == "-- Chọn Chi Đoàn của bạn --":
+                errors.append("🏢 Vui lòng chọn Chi Đoàn")
             
-            if not y_kien or not y_kien.strip():
-                errors.append("Vui lòng nhập ý kiến góp ý")
+            if not y_kien or len(y_kien.strip()) < 10:
+                errors.append("💭 Vui lòng nhập ý kiến góp ý (ít nhất 10 ký tự)")
             elif count_words(y_kien) > 500:
-                errors.append("Ý kiến góp ý không được vượt quá 500 từ")
+                errors.append("📝 Ý kiến góp ý không được vượt quá 500 từ")
             
+            # Hiển thị lỗi hoặc lưu
             if errors:
+                st.markdown('''
+                <div class="warning-box">
+                    <h4 style="margin-top: 0; color: #D97706;">⚠️ Cần hoàn thiện thông tin</h4>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                ''', unsafe_allow_html=True)
                 for error in errors:
-                    st.error(error)
+                    st.markdown(f'<li>{error}</li>', unsafe_allow_html=True)
+                st.markdown('</ul></div>', unsafe_allow_html=True)
             else:
                 try:
                     save_feedback(ho_ten.strip(), chi_doan, y_kien.strip())
-                    st.markdown('<div class="success-message">✅ Cảm ơn bạn! Góp ý của bạn đã được gửi thành công.</div>', unsafe_allow_html=True)
+                    
+                    st.markdown('''
+                    <div class="success-box">
+                        🎉 THÀNH CÔNG!<br><br>
+                        <strong>Cảm ơn bạn đã gửi góp ý quý báu!</strong><br>
+                        Góp ý của bạn đã được lưu thành công và sẽ được Ban tổ chức xem xét kỹ lưỡng.<br><br>
+                        <em>Sự đóng góp của bạn rất có ý nghĩa! 🙏</em>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
                     st.balloons()
+                    
                 except Exception as e:
-                    st.markdown(f'<div class="error-message">❌ Có lỗi xảy ra: {str(e)}</div>', unsafe_allow_html=True)
+                    st.markdown(f'''
+                    <div class="warning-box">
+                        ❌ <strong>Có lỗi xảy ra:</strong> {e}<br>
+                        Vui lòng thử lại hoặc liên hệ Ban tổ chức.
+                    </div>
+                    ''', unsafe_allow_html=True)
     
-    # Footer
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="text-align: center; color: #666; font-size: 14px; margin-top: 2rem;">
-            <p>📧 <strong>Form Góp ý Văn kiện Đại hội Đoàn TCTHK</strong></p>
-            <p>Mọi góp ý của bạn đều được ghi nhận và sẽ được Ban tổ chức xem xét kỹ lưỡng.</p>
-            <p><em>Cảm ơn sự đóng góp quý báu của bạn!</em></p>
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Footer với thiết kế đẹp
+    st.markdown('''
+    <div class="footer">
+        <h3 style="color: #1E40AF; margin-bottom: 1rem;">📧 Form Góp ý Văn kiện Đại hội Đoàn TCTHK</h3>
+        <div style="display: grid; gap: 1rem; text-align: center; color: #6B7280; line-height: 1.6;">
+            <p style="margin: 0;">
+                🙏 <strong style="color: #1F2937;">Cảm ơn sự quan tâm và đóng góp tích cực của bạn!</strong>
+            </p>
+            <p style="margin: 0;">
+                Mọi góp ý đều được ghi nhận và sẽ được Ban tổ chức nghiên cứu, xem xét một cách kỹ lưỡng<br>
+                để hoàn thiện Văn kiện phục vụ Đại hội.
+            </p>
+            <div style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; padding: 1rem; border-radius: 12px; margin-top: 1rem;">
+                <strong>✨ Sự đóng góp của bạn là động lực quý báu giúp Đại hội thành công! ✨</strong>
+            </div>
         </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    </div>
+    ''', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
