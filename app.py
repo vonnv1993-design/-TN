@@ -6,6 +6,7 @@ from datetime import datetime
 import io
 import re
 import base64
+import os
 
 # Cấu hình trang
 st.set_page_config(
@@ -403,10 +404,20 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Khởi tạo database
-@st.cache_resource
+# Tạo thư mục data để lưu database persistent
+@st.cache_data
+def create_data_directory():
+    if not os.path.exists('data'):
+        os.makedirs('data')
+    return True
+
+# Database path - lưu trong thư mục data để persistent
+DATABASE_PATH = os.path.join('data', 'feedback.db')
+
+# Khởi tạo database với migration support
 def init_database():
-    conn = sqlite3.connect('feedback.db', check_same_thread=False)
+    create_data_directory()
+    conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
     cursor = conn.cursor()
     
     # Tạo bảng góp ý
@@ -420,44 +431,60 @@ def init_database():
         )
     ''')
     
-    # Tạo bảng admin với mã hóa nâng cao
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username_hash TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+    # Kiểm tra xem bảng admin_users đã tồn tại chưa và có cột nào
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_users'")
+    table_exists = cursor.fetchone()
     
-    # Tạo tài khoản admin mặc định với mã hóa nâng cao
-    admin_username = "Admin"
-    admin_password = "Admin@123"
+    if table_exists:
+        # Kiểm tra cấu trúc bảng hiện tại
+        cursor.execute("PRAGMA table_info(admin_users)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        # Nếu bảng có cấu trúc cũ, xóa và tạo lại
+        if 'username_hash' not in columns:
+            cursor.execute("DROP TABLE IF EXISTS admin_users")
+            table_exists = False
     
-    # Tạo salt ngẫu nhiên
-    import secrets
-    salt = secrets.token_hex(32)
-    
-    # Mã hóa username và password với salt
-    username_hash = hashlib.pbkdf2_hmac('sha256', admin_username.encode(), salt.encode(), 100000)
-    password_hash = hashlib.pbkdf2_hmac('sha256', admin_password.encode(), salt.encode(), 100000)
-    
-    # Encode to base64 để lưu trữ
-    username_hash_b64 = base64.b64encode(username_hash).decode()
-    password_hash_b64 = base64.b64encode(password_hash).decode()
-    
-    cursor.execute('''
-        INSERT OR IGNORE INTO admin_users (username_hash, password_hash, salt)
-        VALUES (?, ?, ?)
-    ''', (username_hash_b64, password_hash_b64, salt))
+    # Tạo bảng admin_users mới với cấu trúc đúng
+    if not table_exists:
+        cursor.execute('''
+            CREATE TABLE admin_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username_hash TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Tạo tài khoản admin mặc định với mã hóa nâng cao
+        admin_username = "Admin"
+        admin_password = "Admin@123"
+        
+        # Tạo salt ngẫu nhiên
+        import secrets
+        salt = secrets.token_hex(32)
+        
+        # Mã hóa username và password với salt
+        username_hash = hashlib.pbkdf2_hmac('sha256', admin_username.encode(), salt.encode(), 100000)
+        password_hash = hashlib.pbkdf2_hmac('sha256', admin_password.encode(), salt.encode(), 100000)
+        
+        # Encode to base64 để lưu trữ
+        username_hash_b64 = base64.b64encode(username_hash).decode()
+        password_hash_b64 = base64.b64encode(password_hash).decode()
+        
+        cursor.execute('''
+            INSERT INTO admin_users (username_hash, password_hash, salt)
+            VALUES (?, ?, ?)
+        ''', (username_hash_b64, password_hash_b64, salt))
     
     conn.commit()
-    return conn
+    conn.close()
+    return True
 
 # Lưu góp ý vào database
 def save_feedback(ho_ten, chi_doan, y_kien):
-    conn = sqlite3.connect('feedback.db', check_same_thread=False)
+    conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO feedback (ho_ten, chi_doan, y_kien)
@@ -468,8 +495,8 @@ def save_feedback(ho_ten, chi_doan, y_kien):
 
 # Lấy danh sách góp ý
 def get_all_feedback():
-    conn = sqlite3.connect('feedback.db', check_same_thread=False)
     try:
+        conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
         df = pd.read_sql_query('''
             SELECT id, ho_ten as "Họ và Tên", 
                    chi_doan as "Chi Đoàn", 
@@ -478,40 +505,43 @@ def get_all_feedback():
             FROM feedback 
             ORDER BY thoi_gian DESC
         ''', conn)
-    except:
-        df = pd.DataFrame(columns=["Họ và Tên", "Chi Đoàn", "Ý kiến góp ý", "Thời gian"])
-    conn.close()
-    return df
+        conn.close()
+        return df
+    except Exception as e:
+        # Nếu có lỗi, trả về DataFrame rỗng
+        return pd.DataFrame(columns=["Họ và Tên", "Chi Đoàn", "Ý kiến góp ý", "Thời gian"])
 
 # Xác thực admin với mã hóa nâng cao
 def verify_admin(username, password):
-    conn = sqlite3.connect('feedback.db', check_same_thread=False)
-    cursor = conn.cursor()
-    
-    # Lấy tất cả admin users để kiểm tra
-    cursor.execute('SELECT username_hash, password_hash, salt FROM admin_users')
-    users = cursor.fetchall()
-    
-    for username_hash_stored, password_hash_stored, salt in users:
-        try:
-            # Mã hóa username và password input với salt từ database
-            username_hash_input = hashlib.pbkdf2_hmac('sha256', username.encode(), salt.encode(), 100000)
-            password_hash_input = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
-            
-            # Encode to base64
-            username_hash_input_b64 = base64.b64encode(username_hash_input).decode()
-            password_hash_input_b64 = base64.b64encode(password_hash_input).decode()
-            
-            # So sánh hash
-            if (username_hash_input_b64 == username_hash_stored and 
-                password_hash_input_b64 == password_hash_stored):
-                conn.close()
-                return True
-        except Exception as e:
-            continue
-    
-    conn.close()
-    return False
+    try:
+        conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+        cursor = conn.cursor()
+        
+        # Lấy tất cả admin users để kiểm tra
+        cursor.execute('SELECT username_hash, password_hash, salt FROM admin_users')
+        users = cursor.fetchall()
+        conn.close()
+        
+        for username_hash_stored, password_hash_stored, salt in users:
+            try:
+                # Mã hóa username và password input với salt từ database
+                username_hash_input = hashlib.pbkdf2_hmac('sha256', username.encode(), salt.encode(), 100000)
+                password_hash_input = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+                
+                # Encode to base64
+                username_hash_input_b64 = base64.b64encode(username_hash_input).decode()
+                password_hash_input_b64 = base64.b64encode(password_hash_input).decode()
+                
+                # So sánh hash
+                if (username_hash_input_b64 == username_hash_stored and 
+                    password_hash_input_b64 == password_hash_stored):
+                    return True
+            except Exception:
+                continue
+        
+        return False
+    except Exception:
+        return False
 
 # Đếm số từ
 def count_words(text):
@@ -521,11 +551,14 @@ def count_words(text):
     return len(words)
 
 def main():
-    # Khởi tạo database
-    try:
-        init_database()
-    except Exception as e:
-        st.error(f"Chào mừng: {e}")
+    # Khởi tạo database (chỉ chạy 1 lần khi startup)
+    if 'db_initialized' not in st.session_state:
+        try:
+            init_database()
+            st.session_state.db_initialized = True
+        except Exception as e:
+            st.error(f"Lỗi khởi tạo database: {e}")
+            st.stop()
     
     # Initialize session state
     if 'admin_logged_in' not in st.session_state:
@@ -566,7 +599,7 @@ def main():
         
         else:
             # Admin Dashboard
-            st.markdown('<div class="success-box">✅ Chào mừng Admin! Bạn đã đăng nhập thành công.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="success-box">✅ Đăng nhập thành công với quyền Admin!</div>', unsafe_allow_html=True)
             
             col_logout1, col_logout2, col_logout3 = st.columns([1, 2, 1])
             with col_logout2:
@@ -637,7 +670,7 @@ def main():
     # Spacing
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Form góp ý chính với thiết kế hiện đại (đã bỏ hướng dẫn)
+    # Form góp ý chính với thiết kế hiện đại
     st.markdown('<div class="form-container">', unsafe_allow_html=True)
     st.markdown('<div class="section-header">✍️ GỬI GÓP Ý CỦA BẠN</div>', unsafe_allow_html=True)
     
@@ -652,10 +685,10 @@ def main():
         # Spacing
         st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
         
-        # Chi Đoàn - Thay đổi thành text input tự do
+        # Chi Đoàn - Text input tự do
         chi_doan = st.text_input(
             "🏢 Chi Đoàn *",
-            placeholder="Ví dụ: Chi Đoàn Ban CĐSCN",
+            placeholder="Ví dụ: Chi Đoàn Khoa Công nghệ Thông tin",
             help="Nhập tên Chi Đoàn mà bạn đang sinh hoạt"
         )
         
