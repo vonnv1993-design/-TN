@@ -5,6 +5,7 @@ import hashlib
 from datetime import datetime
 import io
 import re
+import base64
 
 # Cấu hình trang
 st.set_page_config(
@@ -419,21 +420,37 @@ def init_database():
         )
     ''')
     
-    # Tạo bảng admin
+    # Tạo bảng admin với mã hóa nâng cao
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS admin_users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL
+            username_hash TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
-    # Thêm tài khoản admin mặc định
-    admin_password = hashlib.sha256("Admin@123".encode()).hexdigest()
+    # Tạo tài khoản admin mặc định với mã hóa nâng cao
+    admin_username = "Admin"
+    admin_password = "Admin@123"
+    
+    # Tạo salt ngẫu nhiên
+    import secrets
+    salt = secrets.token_hex(32)
+    
+    # Mã hóa username và password với salt
+    username_hash = hashlib.pbkdf2_hmac('sha256', admin_username.encode(), salt.encode(), 100000)
+    password_hash = hashlib.pbkdf2_hmac('sha256', admin_password.encode(), salt.encode(), 100000)
+    
+    # Encode to base64 để lưu trữ
+    username_hash_b64 = base64.b64encode(username_hash).decode()
+    password_hash_b64 = base64.b64encode(password_hash).decode()
+    
     cursor.execute('''
-        INSERT OR IGNORE INTO admin_users (username, password_hash)
-        VALUES (?, ?)
-    ''', ("Admin", admin_password))
+        INSERT OR IGNORE INTO admin_users (username_hash, password_hash, salt)
+        VALUES (?, ?, ?)
+    ''', (username_hash_b64, password_hash_b64, salt))
     
     conn.commit()
     return conn
@@ -466,18 +483,35 @@ def get_all_feedback():
     conn.close()
     return df
 
-# Xác thực admin
+# Xác thực admin với mã hóa nâng cao
 def verify_admin(username, password):
     conn = sqlite3.connect('feedback.db', check_same_thread=False)
     cursor = conn.cursor()
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    cursor.execute('''
-        SELECT id FROM admin_users 
-        WHERE username = ? AND password_hash = ?
-    ''', (username, password_hash))
-    result = cursor.fetchone()
+    
+    # Lấy tất cả admin users để kiểm tra
+    cursor.execute('SELECT username_hash, password_hash, salt FROM admin_users')
+    users = cursor.fetchall()
+    
+    for username_hash_stored, password_hash_stored, salt in users:
+        try:
+            # Mã hóa username và password input với salt từ database
+            username_hash_input = hashlib.pbkdf2_hmac('sha256', username.encode(), salt.encode(), 100000)
+            password_hash_input = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            
+            # Encode to base64
+            username_hash_input_b64 = base64.b64encode(username_hash_input).decode()
+            password_hash_input_b64 = base64.b64encode(password_hash_input).decode()
+            
+            # So sánh hash
+            if (username_hash_input_b64 == username_hash_stored and 
+                password_hash_input_b64 == password_hash_stored):
+                conn.close()
+                return True
+        except Exception as e:
+            continue
+    
     conn.close()
-    return result is not None
+    return False
 
 # Đếm số từ
 def count_words(text):
@@ -485,22 +519,6 @@ def count_words(text):
         return 0
     words = re.findall(r'\S+', text.strip())
     return len(words)
-
-# Danh sách Chi Đoàn
-CHI_DOAN_LIST = [
-    "Chi Đoàn Khoa Công nghệ Thông tin",
-    "Chi Đoàn Khoa Kinh tế",
-    "Chi Đoàn Khoa Ngoại ngữ", 
-    "Chi Đoàn Khoa Luật",
-    "Chi Đoàn Khoa Y",
-    "Chi Đoàn Khoa Kỹ thuật",
-    "Chi Đoàn Khoa Giáo dục",
-    "Chi Đoàn Khoa Khoa học Xã hội",
-    "Chi Đoàn A1", "Chi Đoàn A2", "Chi Đoàn A3",
-    "Chi Đoàn B1", "Chi Đoàn B2", "Chi Đoàn B3", 
-    "Chi Đoàn C1", "Chi Đoàn C2", "Chi Đoàn C3",
-    "Khác"
-]
 
 def main():
     # Khởi tạo database
@@ -529,9 +547,9 @@ def main():
             
             col1, col2 = st.columns(2)
             with col1:
-                admin_username = st.text_input("👤 Tên đăng nhập", key="admin_user", placeholder="Admin")
+                admin_username = st.text_input("👤 Tên đăng nhập", key="admin_user", placeholder="Nhập tên đăng nhập")
             with col2:
-                admin_password = st.text_input("🔒 Mật khẩu", type="password", key="admin_pass", placeholder="Admin@123")
+                admin_password = st.text_input("🔒 Mật khẩu", type="password", key="admin_pass", placeholder="Nhập mật khẩu")
             
             col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
             with col_btn2:
@@ -619,28 +637,7 @@ def main():
     # Spacing
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Hướng dẫn sử dụng
-    st.markdown('''
-    <div class="info-box">
-        <h4 style="margin-top: 0; color: #1E40AF;">💡 HƯỚNG DẪN GÓP Ý</h4>
-        <div style="display: grid; gap: 0.75rem; margin-bottom: 0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="color: #F59E0B; font-weight: bold;">①</span>
-                <span>Điền đầy đủ <strong>Họ tên</strong> và chọn <strong>Chi Đoàn</strong></span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="color: #F59E0B; font-weight: bold;">②</span>
-                <span>Chia sẻ ý kiến của bạn (<strong>tối đa 500 từ</strong>)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="color: #F59E0B; font-weight: bold;">③</span>
-                <span>Nhấn <strong>"GỬI GÓP Ý"</strong> để hoàn tất</span>
-            </div>
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
-    
-    # Form góp ý chính với thiết kế hiện đại
+    # Form góp ý chính với thiết kế hiện đại (đã bỏ hướng dẫn)
     st.markdown('<div class="form-container">', unsafe_allow_html=True)
     st.markdown('<div class="section-header">✍️ GỬI GÓP Ý CỦA BẠN</div>', unsafe_allow_html=True)
     
@@ -655,23 +652,12 @@ def main():
         # Spacing
         st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
         
-        # Chi Đoàn
-        chi_doan = st.selectbox(
+        # Chi Đoàn - Thay đổi thành text input tự do
+        chi_doan = st.text_input(
             "🏢 Chi Đoàn *",
-            options=["-- Chọn Chi Đoàn của bạn --"] + CHI_DOAN_LIST,
-            help="Chọn Chi Đoàn mà bạn đang sinh hoạt"
+            placeholder="Ví dụ: Chi Đoàn Khoa Công nghệ Thông tin",
+            help="Nhập tên Chi Đoàn mà bạn đang sinh hoạt"
         )
-        
-        # Chi Đoàn khác
-        if chi_doan == "Khác":
-            st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-            chi_doan_khac = st.text_input(
-                "📝 Tên Chi Đoàn:",
-                placeholder="Nhập tên Chi Đoàn của bạn",
-                help="Nhập tên chính xác của Chi Đoàn"
-            )
-            if chi_doan_khac and chi_doan_khac.strip():
-                chi_doan = chi_doan_khac.strip()
         
         # Spacing
         st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
@@ -713,8 +699,8 @@ def main():
             if not ho_ten or len(ho_ten.strip()) < 2:
                 errors.append("👤 Vui lòng nhập Họ và Tên (ít nhất 2 ký tự)")
             
-            if not chi_doan or chi_doan == "-- Chọn Chi Đoàn của bạn --":
-                errors.append("🏢 Vui lòng chọn Chi Đoàn")
+            if not chi_doan or len(chi_doan.strip()) < 2:
+                errors.append("🏢 Vui lòng nhập tên Chi Đoàn (ít nhất 2 ký tự)")
             
             if not y_kien or len(y_kien.strip()) < 10:
                 errors.append("💭 Vui lòng nhập ý kiến góp ý (ít nhất 10 ký tự)")
@@ -733,7 +719,7 @@ def main():
                 st.markdown('</ul></div>', unsafe_allow_html=True)
             else:
                 try:
-                    save_feedback(ho_ten.strip(), chi_doan, y_kien.strip())
+                    save_feedback(ho_ten.strip(), chi_doan.strip(), y_kien.strip())
                     
                     st.markdown('''
                     <div class="success-box">
