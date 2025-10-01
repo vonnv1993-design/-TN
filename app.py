@@ -688,7 +688,7 @@ def main():
         # Chi Đoàn - Text input tự do
         chi_doan = st.text_input(
             "🏢 Chi Đoàn *",
-            placeholder="Ví dụ: Chi Đoàn Khoa Công nghệ Thông tin",
+            placeholder="Ví dụ: Chi Đoàn Ban CĐSCN",
             help="Nhập tên Chi Đoàn mà bạn đang sinh hoạt"
         )
         
